@@ -1,0 +1,153 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<link rel="stylesheet" type="text/css" href="style2.css" />
+<%
+var aToken = session.get("AccessToken");
+var rToken = session.get("RefreshToken");
+var newRefresh;
+var newAccess;
+var log = new Log();
+var jsonDataObj;
+var status;
+var iAccess;
+var iRefresh;
+
+
+print(aToken);
+//getData(aToken);
+//print("Refresh token"+rToken);
+//print("-----------------Refresh Token-----------------");
+//doRefreshToken();
+
+
+	getData(aToken);
+	if(status != 200) {
+	doRefreshToken();
+	print("========" + aToken + "========");
+	print("========" + rToken + "========");	
+	}
+	
+
+
+//Use to get data 
+function getData(accessToken){
+
+	var url = "https://10.100.4.112:8245/parkingsystemapi/1.0.0/lastRecord" ;
+	var headers = {"Authorization":"Bearer " + accessToken,"Accept":"application/json"};
+	//Data
+	var payload = {};
+	
+	var res = get(url,payload,headers);
+	//Convert data to json	
+	try{
+		jsonDataObj = (parse(res.data));
+		log.info(res.data);
+		status = res.xhr.status;
+		print(jsonDataObj);
+		print(status);
+		
+	}catch(err){
+		log.error("cannot convert");	
+	}		
+}
+
+//Use to renew tokens
+function doRefreshToken(){
+	
+	var url = "https://10.100.4.112:8245/token";
+	var payload = {"grant_type":"refresh_token","refresh_token":rToken,"scope":"PRODUCTION"};
+	var headers = {	"Content-Type":"application/x-www-form-urlencoded",
+					"Authorization":"Bearer bUNwNEFhejJMZkFCdHF6cGVKR085cjZrRU5BYTptU3VmbFRhb3U0TzRTM0JaZEhqMHRkWGhUbVVh",
+					"Accept":"application/json"};
+	
+	//Get refresh token and access token from refresh
+	var refresh = post(url,payload,headers);
+	//Parse json data to a javascript object
+	var obj2 = (parse(refresh.data));
+	
+	
+	
+	//Assign new tokens to access and refresh tokens
+	aToken = obj2.access_token;
+	rToken = obj2.refresh_token;
+	
+	//refrehToken = iRefresh;
+	//accessToken = iAccess;
+	
+	//Print tokens
+	//print("+++NewAccess Token+++"+ iAccess);	
+	//print("+++NewRefresh Token+++" + iRefresh);
+	
+	//=====For Testing============
+	print(obj2);
+	log.info(obj2);
+
+}
+
+
+%>
+</head>
+
+<body>
+	<h3>Parking Details</h3>
+	<table "parkdetails" border="2">
+		<tr>
+			<th>Park ID</th>
+			<th>Time</th>
+			<th>Date</th>
+			<th>Status</th>
+			<th>operator</th>
+		</tr>
+		
+		<%
+		if(jsonDataObj){
+		for (var i in jsonDataObj.BaseElement.Element){
+
+			var sDate = jsonDataObj.BaseElement.Element[i].specDate.toString();
+			var date = sDate.split("+");
+
+			var sTime = jsonDataObj.BaseElement.Element[i].specTime.toString();
+			var time = sTime.split("+");
+		%>
+		<tr>
+			<td> <%=jsonDataObj.BaseElement.Element[i].parkId%></td>
+			<td><%= time[0]%></td>
+			<td><%= date[0]%></td>
+			<td><%=jsonDataObj.BaseElement.Element[i].status%></td>
+			<td><%=jsonDataObj.BaseElement.Element[i].operator %></td>
+                        
+		</tr>
+			
+		<%
+		
+ 		}
+		
+			
+ 		}else{
+		%>
+			<tr><td colspan='5'>Oops. No data available...!</td></tr>
+		<% 			
+
+ 		}
+		%>
+
+	    
+		<div class="sub">
+			
+			<form id="id" method="post" name="logoutform" action="login.jag">
+			<input type="submit" value="Logout" id="submit" />
+			</form>
+		</div>
+			
+	    
+
+		
+		
+</body>
+ 
+</html>
+

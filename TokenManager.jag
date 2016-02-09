@@ -1,0 +1,176 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<link rel="stylesheet" type="text/css" href="style.css" />
+
+<%
+var accessToken;
+var refreshToken;
+
+var iAccess;
+var iRefresh;
+
+var status;
+var jsonDataObj;
+var log = new Log();
+
+//Generate tokens by sending a request to token api
+function tokenGen(username, password){
+	
+	var url = "https://10.100.4.112:8245/token";
+	var payload = {"grant_type":"password","username":username,"password":password,"scope":"PRODUCTION"};
+	var headers = {	"Content-Type":"application/x-www-form-urlencoded",
+						"Authorization":"Bearer bUNwNEFhejJMZkFCdHF6cGVKR085cjZrRU5BYTptU3VmbFRhb3U0TzRTM0JaZEhqMHRkWGhUbVVh",
+						"Accept":"application/json"};
+	
+	var refresh = post(url,payload,headers);
+	var status  = refresh.xhr.status;
+	
+	if(status != 200) {
+		
+		return null;
+		
+	}else {
+
+		    var obj2 = (parse(refresh.data));
+			iAccess = obj2.access_token;
+			iRefresh = obj2.refresh_token;
+			accessToken = iAccess;
+			refreshToken = iRefresh;
+			
+			print("+++iAccess Token+++"+ iAccess);
+			print("+++iRefresh Token+++" + iRefresh);
+				
+	}
+		
+}
+//Get data and convert to json
+accessToken = "7e8caccb7438862a8eb2417dea2e77";
+function getData(accessToken){
+
+	var url = "https://10.100.4.112:8245/carparksystem/1.0.0/latestRecord" ;
+	var headers = {"Authorization":"Bearer " + accessToken,"Accept":"application/json"};
+	//Data
+	var payload = {};
+	
+	var res = get(url,payload,headers);
+	//Convert data to json	
+	try{
+		jsonDataObj = (parse(res.data));
+		log.info(res.data);
+		status = res.xhr.status;
+		print(jsonDataObj);
+		print(status);
+		
+	}catch(err){
+		log.error("cannot convert");
+		
+	}
+	
+
+}
+
+
+//create new access and refresh tokens
+function doRefreshToken(){
+	
+	var url = "https://10.100.4.112:8245/token";
+	var payload = {"grant_type":"refresh_token","refresh_token":refreshToken,"scope":"PRODUCTION"};
+	var headers = {	"Content-Type":"application/x-www-form-urlencoded",
+					"Authorization":"Bearer bUNwNEFhejJMZkFCdHF6cGVKR085cjZrRU5BYTptU3VmbFRhb3U0TzRTM0JaZEhqMHRkWGhUbVVh",
+					"Accept":"application/json"};
+	
+	//Get refresh token and access token from refresh
+	var refresh = post(url,payload,headers);
+	//Parse data to json
+	var obj2 = (parse(refresh.data));
+	
+	
+	
+	//Assign new tokens to access and refresh tokens
+	iAccess = obj2.access_token;
+	iRefresh = obj2.refresh_token;
+	//refreshToken = tempToken;
+	refrehToken = iRefresh;
+	accessToken = iAccess;
+	
+	//Print tokens
+	print("+++NewAccess Token+++"+ accessToken);	
+	print("+++NewRefresh Token+++" + refreshToken);
+	
+	//=====For Testing============
+	print(obj2);
+	log.info(obj2);
+
+}
+
+function validate(){
+	
+	tokenGen();
+	getData(accessToken);
+	
+	//Check status, If it is not successfull then 
+	if(status !=200) {
+		print("Entering");
+		//Generate new tokens
+		tokenGen();
+		print("Access Token == "  + accessToken);
+		doRefreshToken();
+		print("New Access Token=="  + accessToken);
+		//Get data from dss using API
+		getData(accessToken);
+	}	
+	
+}
+
+validate();
+
+
+%>	
+</head>
+
+<body>
+
+	<h2>Parking Details</h2>
+	<table "parkdetails" border="2">
+		<tr>
+			<th>Park ID</th>
+			<th>Time</th>
+			<th>Date</th>
+			<th>Status</th>
+			<th>operator</th>
+		</tr>
+		
+		<%
+		if(jsonDataObj){
+		for (var i in jsonDataObj.BaseElement.Element){
+		%>
+		<tr>
+			<td> <%=jsonDataObj.BaseElement.Element[i].parkId%></td>
+			<td><%=jsonDataObj.BaseElement.Element[i].specTime%></td>
+			<td><%=jsonDataObj.BaseElement.Element[i].specDate%></td>
+			<td><%=jsonDataObj.BaseElement.Element[i].status%></td>
+			<td><%=jsonDataObj.BaseElement.Element[i].operator %></td>
+		</tr>
+		<%
+ 		}
+ 		}else{
+		%>
+			<tr><td colspan='4'>Oops. No data available...!</td></tr>
+		<% 			
+
+ 		}
+		%>
+		
+		
+		
+		
+
+	</table>
+</body>
+
+</html>
+

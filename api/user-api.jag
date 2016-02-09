@@ -1,0 +1,83 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<script type="text/javascript" src="details.js" ></script>
+</head>
+
+<body>
+<%
+var uri = request.getRequestURI();
+var uriMatcher = new URIMatcher(String(uri));
+var log = new Log("api/user-api.jag");
+
+var result;
+var log2 = new Log();
+log.info("==========");
+
+var accessToken;
+var refreshToken;
+var iAccess;
+var iRefresh;
+var status;
+
+if (uriMatcher.match("/{context}/api/user/login/")) {
+
+	var username = request.getParameter("username");
+	var password = request.getParameter("password");
+	var context = uriMatcher.elements().context;
+	try {
+		tokenGen(username,password);
+		
+		if(status != 200){
+			
+			        //print("Login Failed");
+				response.sendRedirect("/" + context + "/login.jag");
+			
+		}else{
+			
+			session.put("AccessToken", accessToken);
+			session.put("RefreshToken", refreshToken);
+			response.sendRedirect("/" + context + "/Test.jag");
+			
+		}
+
+
+	} catch (e) {
+		log.error("Exception occurred while a user tried to login", e);
+
+	}
+
+}
+
+	
+function tokenGen(username, password){
+
+	var url = "https://10.100.4.112:8245/token";
+	var payload = {"grant_type":"password","username":username,"password":password,"scope":"PRODUCTION"};
+	var headers = {
+			"Content-Type":"application/x-www-form-urlencoded",
+			"Authorization":"Bearer bUNwNEFhejJMZkFCdHF6cGVKR085cjZrRU5BYTptU3VmbFRhb3U0TzRTM0JaZEhqMHRkWGhUbVVh",
+			"Accept":"application/json"};
+
+	var refresh = post(url,payload,headers);
+	status  = refresh.xhr.status;
+
+	var obj2 = (parse(refresh.data));
+	iAccess = obj2.access_token;
+	iRefresh = obj2.refresh_token;
+	accessToken = iAccess;
+	refreshToken = iRefresh;
+
+}
+
+%>
+</body>
+ 
+</html>
+
+
+
+

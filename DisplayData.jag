@@ -1,0 +1,54 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<link rel="stylesheet" type="text/css" href="style.css" />
+<%
+	//Get data from login page or token page and display them using jsonDataObj
+%>	
+</head>
+
+<body>
+
+	<h2>Parking Details</h2>
+	<table "parkdetails" border="2">
+		<tr>
+			<th>Park ID</th>
+			<th>Time</th>
+			<th>Date</th>
+			<th>Status</th>
+			<th>operator</th>
+		</tr>
+		
+		<%
+		if(jsonDataObj){
+		for (var i in jsonDataObj.BaseElement.Element){
+		%>
+		<tr>
+			<td> <%=jsonDataObj.BaseElement.Element[i].parkId%></td>
+			<td><%=jsonDataObj.BaseElement.Element[i].specTime%></td>
+			<td><%=jsonDataObj.BaseElement.Element[i].specDate%></td>
+			<td><%=jsonDataObj.BaseElement.Element[i].status%></td>
+			<td><%=jsonDataObj.BaseElement.Element[i].operator %></td>
+		</tr>
+		<%
+ 		}
+ 		}else{
+		%>
+			<tr><td colspan='4'>Oops. No data available...!</td></tr>
+		<% 			
+
+ 		}
+		%>
+		
+		
+		
+		
+
+	</table>
+</body>
+
+</html>
+
